@@ -19,7 +19,7 @@ object Core extends ScalaModule {
   )
 
   def basePath = pwd / 'core
-  override def sources = pwd/'core/'src/'main/'scala
+  override def sources = Seq(pwd/'core/'src/'main/'scala)
 
   val cross =
     for(jarLabel <- mill.define.Cross("jarA", "jarB", "jarC"))

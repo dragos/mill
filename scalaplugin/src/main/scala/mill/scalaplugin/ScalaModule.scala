@@ -30,7 +30,7 @@ object ScalaModule{
 
   val compilerCache = new CompilerCache(10)
   def compileScala(scalaVersion: String,
-                   sources: Path,
+                   sources: Seq[Path],
                    compileClasspath: Seq[Path],
                    outputPath: Path): PathRef = {
     val binaryScalaVersion = scalaVersion.split('.').dropRight(1).mkString(".")
@@ -91,7 +91,7 @@ object ScalaModule{
     val newResult = ic.compile(
       ic.inputs(
         classpath = compileClasspath.map(_.toIO).toArray,
-        sources = ls.rec(sources).filter(_.isFile).map(_.toIO).toArray,
+        sources = sources.map(src => ls.rec(src)).flatten.filter(_.isFile).map(_.toIO).toArray,
         classesDirectory = (outputPath / 'classes).toIO,
         scalacOptions = Array(),
         javacOptions = Array(),
@@ -233,24 +233,27 @@ trait ScalaModule extends Module{
       )
   }
 
-  def sources = T.source{ basePath / 'src }
-  def resources = T.source{ basePath / 'resources }
+  def sources = T.sources{ basePath / 'src }
+  def resources = T.sources{ basePath / 'resources }
   def compile = T.persistent{
-    compileScala(scalaVersion(), sources().path, compileDepClasspath().map(_.path), T.ctx().dest)
+    compileScala(scalaVersion(), sources().map(_.path), compileDepClasspath().map(_.path), T.ctx().dest)
   }
   def assembly = T{
     val dest = T.ctx().dest
+
+    val allRes = (runDepClasspath().filter(_.path.ext != "pom") ++ resources() :+ compile())
     createAssembly(
       dest,
-      (runDepClasspath().filter(_.path.ext != "pom") ++ Seq(resources(), compile())).map(_.path).filter(exists)
+      allRes.map{x: PathRef => x.path}.filter(exists)
     )
     PathRef(dest)
   }
 
-  def classpath = T{ Seq(resources(), compile()) }
+  def classpath = T{ resources() :+ compile() }
   def jar = T{
     val dest = T.ctx().dest
-    createJar(dest, Seq(resources(), compile()).map(_.path).filter(exists))
+    val allRes = resources() :+ compile()
+    createJar(dest, allRes.map(_.path).filter(exists))
     PathRef(dest)
   }
 

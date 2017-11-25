@@ -34,11 +34,11 @@ object JavaCompileJarTests extends TestSuite{
         //                                |
         //                                v
         //           resourceRoot ---->  jar
-        def sourceRoot = T.source{ sourceRootPath }
-        def resourceRoot = T.source{ resourceRootPath }
-        def allSources = T{ ls.rec(sourceRoot().path).map(PathRef(_)) }
+        def sourceRoot = T.sources{ sourceRootPath }
+        def resourceRoot = T.sources{ resourceRootPath }
+        def allSources = T{ sourceRoot().map(src => ls.rec(src.path).map(PathRef(_))).flatten }
         def classFiles = T{ compileAll(T.ctx().dest, allSources()) }
-        def jar = T{ jarUp(resourceRoot, classFiles) }
+        def jar = T{ jarUp(resourceRoot.unwrap :+ classFiles) }
 
         def run(mainClsName: String) = T.command{
           %%('java, "-cp", classFiles().path, mainClsName)

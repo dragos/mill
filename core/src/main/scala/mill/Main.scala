@@ -77,7 +77,8 @@ object Main {
               val evaluator = new Evaluator(workspacePath, mapping, log.info)
               val evaluated = evaluator.evaluate(OSet(target))
               evaluated.transitive.foreach{
-                case t: define.Source => watch(t.handle.path)
+                case t: define.Sources =>
+                  t.handle.foreach(x => watch(x.path))
                 case _ => // do nothing
               }
 

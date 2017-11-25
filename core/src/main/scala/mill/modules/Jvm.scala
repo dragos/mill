@@ -112,7 +112,7 @@ object Jvm {
     }
   }
 
-  def jarUp(roots: Task[PathRef]*) = new Task[PathRef]{
+  def jarUp(roots: Seq[Task[PathRef]]) = new Task[PathRef]{
 
     val inputs = roots
     def evaluate(args: Args) = {
